@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>老司机逆袭故事 - 卡片集 (已修复)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <style>
+        /* --- CSS样式 (V21.0 一键导出最终版) --- */
+        /* 引入阿里巴巴普惠体 2.0 */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap');
+        
+        :root {
+            --bg-color: #FFFFFF; 
+            --text-color: #1a1a1a; 
+            --secondary-text-color: #555; 
+            --light-text-color: #aaa; 
+            --watermark-color: #EAEAEA;
+            --font-family: 'Noto Sans SC', 'PingFang SC', sans-serif;
+            --accent-blue: #E9F3FB; 
+            --accent-green: #EBF5EE; 
+            --accent-pink: #FCEEEE; 
+            --accent-purple: #f3e5f5; 
+            --accent-yellow: #FFF9E5;
+            --card-width: 1080px; 
+            --card-height: 1440px;
+        }
+        
+        body { 
+            margin: 0; 
+            padding: 0; 
+            background-color: #f0f2f5; 
+            font-family: var(--font-family); 
+        }
+        
+        .controls { 
+            text-align: center; 
+            padding: 40px; 
+            background: #fff; 
+            border-bottom: 1px solid #ddd; 
+            position: sticky; 
+            top: 0; 
+            z-index: 1000; 
+        }
+        
+        .export-all-btn { 
+            padding: 15px 30px; 
+            font-size: 24px; 
+            font-weight: 700; 
+            background-color: #2c3e50; 
+            color: #fff; 
+            border: none; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            transition: background-color 0.3s;
+        }
+        
+        .export-all-btn:hover:not(:disabled) { 
+            background-color: #34495e; 
+        }
+        .export-all-btn:disabled {
+            background-color: #7f8c8d;
+            cursor: not-allowed;
+        }
+        
+        .all-cards-container { 
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            gap: 50px; 
+            padding: 50px; 
+        }
+        
+        .card-container { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 20px; 
+        }
+        
+        .card {
+            width: var(--card-width); 
+            height: var(--card-height); 
+            background-color: var(--bg-color); 
+            color: var(--text-color);
+            box-sizing: border-box; 
+            padding: 100px; 
+            display: flex; 
+            flex-direction: column;
+            position: relative; 
+            flex-shrink: 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border-radius: 20px;
+        }
+        
+        .export-btn { 
+            padding: 10px 20px; 
+            font-size: 18px; 
+            font-weight: 500; 
+            background-color: #7f8c8d; 
+            color: #fff; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            transition: background-color 0.3s;
+        }
+        
+        .export-btn:hover:not(:disabled) { 
+            background-color: #95a5a6; 
+        }
+        .export-btn:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        
+        /* Layout */
+        .layout-focal { 
+            justify-content: center; 
+            align-items: center; 
+            text-align: center; 
+        }
+        .layout-focal .content-wrapper { 
+            width: 100%; 
+            max-width: 920px; 
+            text-align: center; 
+        }
+        .layout-structured { 
+            justify-content: flex-start; 
+            align-items: flex-start; 
+            text-align: left; 
+        }
+        .layout-structured .content-wrapper { 
+            width: 100%; 
+            max-width: 880px; 
+        }
+
+        /* Typography */
+        h1 { 
+            font-size: 72px; 
+            font-weight: 900; 
+            margin: 0 0 40px 0; 
+            line-height: 1.2; 
+            text-shadow: 0 0 1px rgba(0,0,0,0.01); 
+        }
+        h2 { 
+            font-size: 48px; 
+            font-weight: 700; 
+            margin: 20px 0; 
+            display: flex; 
+            align-items: center; 
+            line-height: 1.3;
+        }
+        p { 
+            font-size: 36px; 
+            line-height: 1.7; 
+            margin: 30px 0; 
+            color: var(--secondary-text-color); 
+            font-weight: 400; 
+        }
+        
+        .highlight {
+            background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .emoji {
+            font-size: 1.2em;
+            margin: 0 8px;
+        }
+        
+        .footer { 
+            position: absolute; 
+            bottom: 60px; 
+            left: 0; 
+            right: 0; 
+            text-align: center; 
+            font-size: 30px; 
+            color: var(--light-text-color); 
+            font-weight: 400;
+        }
+        
+        .page-number { 
+            position: absolute; 
+            bottom: 60px; 
+            right: 100px; 
+            font-size: 28px; 
+            color: var(--watermark-color); 
+            font-weight: 400;
+        }
+        
+        /* Card Backgrounds */
+        .card-1 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .card-1 h1, .card-1 h2 { color: white; }
+        .card-1 p { color: rgba(255,255,255,0.9); }
+        
+        .card-2 { background: var(--accent-blue); }
+        .card-3 { background: var(--accent-green); }
+        .card-4 { background: var(--accent-pink); }
+        .card-5 { background: var(--accent-purple); }
+        .card-6 { background: var(--accent-yellow); }
+        .card-7 { background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); }
+        .card-8 { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+        .card-9 { background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%); }
+        .card-10 { background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); }
+        
+        /* Components */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 40px 0;
+        }
+        .stat-item {
+            background: rgba(255,255,255,0.8);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 48px;
+            font-weight: 900;
+            color: #e74c3c;
+            display: block;
+        }
+        .tips-list {
+            background: rgba(255,255,255,0.9);
+            padding: 40px;
+            border-radius: 20px;
+            margin: 30px 0;
+        }
+        .tip-item {
+            display: flex;
+            align-items: flex-start;
+            margin: 25px 0;
+            padding: 20px;
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 15px;
+        }
+        .tip-number {
+            background: #3498db;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+        .tip-content {
+            flex: 1;
+        }
+        .tip-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin: 0 0 10px 0;
+        }
+        .tip-desc {
+            font-size: 28px;
+            color: #555;
+            margin: 0;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button id="exportAll" class="export-all-btn">📦 一键导出全部卡片为 ZIP</button>
+    </div>
+    
+    <div class="all-cards-container">
+        <div class="card-container">
+            <div id="card-1" class="card card-1 layout-focal">
+                <div class="content-wrapper">
+                    <h1>🚀 经历80%本金回撤后<br>他靠"观察新品"逆袭...</h1>
+                    <p>在新兴科技世界，人人都想找到下一个高成长项目。但今天故事的主角"老司机"，却在经历了一次毁灭性的亏损后，找到了另一条路。</p>
+                    <p>💡 他不再追逐热点，而是选择<span class="highlight">站在热点的对立面</span>。</p>
+                    <p>这个从股市"小白"成长起来的资深观察家，他的逆袭故事，可能颠覆你对市场的认知。</p>
+                    <div style="background: linear-gradient(45deg, #2c3e50, #34495e); color: white; padding: 20px 40px; margin: 40px 0; border-radius: 15px; text-align: center; font-size: 64px; font-weight: 900; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); box-shadow: 0 8px 25px rgba(0,0,0,0.2);">币圈老司机</div>
+                </div>
+                <div class="page-number">1/10</div>
+            </div>
+            <button class="export-btn" data-card-id="card-1">导出此卡片</button>
+        </div>
+
+        <div class="card-container">
+            <div id="card-2" class="card card-2 layout-structured">
+                <div class="content-wrapper">
+                    <h2>👨‍💼 从股市"小白"到链上"老司机"</h2>
+                    <p>认识一下主角：<span class="highlight">币圈老司机</span> <span class="emoji">🎯</span></p>
+                    <p>他的故事，始于大学时代家里给的<strong>10万启动金</strong>。</p>
+                    <p>2015年，市场的大幅波动让他一年内亏到只剩<span class="highlight">4万块</span> <span class="emoji">😭</span></p>
+                    <p>正是这次失败，让他开始在股票论坛寻找新机会，并最终接触到了巴比特这样的早期行业媒体，从此踏入了新世界的大门 <span class="emoji">🚪</span></p>
+                </div>
+                <div class="page-number">2/10</div>
+            </div>
+            <button class="export-btn" data-card-id="card-2">导出此卡片</button>
+        </div>
+
+        <div class="card-container">
+            <div id="card-3" class="card card-3 layout-structured">
+                <div class="content-wrapper">
+                    <h2>📈 半年逆袭170万，也曾与千倍项目擦肩</h2>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-number">4万</span>
+                            <p>起始资金</p>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-number">170万</span>
+                            <p>毕业时资金</p>
+                        </div>
+                    </div>
+                    <p>2016年底，老司机将股市剩下的4万块投入了新兴市场，命运的齿轮开始转动 <span class="emoji">⚙️</span></p>
+                    <p>然而，他也并非一路坦途。作为达鸿飞NEO项目的早期参与者，他在发行价1元时入场，却在项目跌至0.5元时，将份额回购给了承诺会负责的创始人 <span class="emoji">🤝</span></p>
+                    <p><strong>最终结果：</strong>项目从1元涨到了<span class="highlight">1000元</span>，而他只获得了最初的两三倍涨幅 <span class="emoji">😅</span></p>
+                </div>
+                <div class="page-number">3/10</div>
+            </div>
+            <button class="export-btn" data-card-id="card-3">导出此卡片</button>
+        </div>
+        <div class="card-container">
+            <div id="card-4" class="card card-4 layout-focal">
+                <div class="content-wrapper">
+                    <h1>💔 经历80%回撤<br>黯然离场半年</h1>
+                    <p>每一个老司机，都曾有过不顺利的经历。老司机也不例外。</p>
+                    <div class="stat-item" style="margin: 40px 0;">
+                        <span class="stat-number">80%</span>
+                        <p>本金亏损比例</p>
+                    </div>
+                    <p>在积累了第一笔资金之后，一次重大的仓位风险，让他亏掉了将近80%的本金 <span class="emoji">📉</span></p>
+                    <p>这次打击让他心灰意冷，选择了离开这个圈子，<span class="highlight">一走就是半年</span> <span class="emoji">🚶‍♂️</span></p>
+                    <p>这是他探索路上最黑暗的一段时期。</p>
+                </div>
+                <div class="page-number">4/10</div>
+            </div>
+            <button class="export-btn" data-card-id="card-4">导出此卡片</button>
+        </div>
+        <div class="card-container">
+            <div id="card-5" class="card card-5 layout-structured">
+                <div class="content-wrapper">
+                    <h2>✍️ 他曾逃离，也为腾讯抖音写过稿</h2>
+                    <p>离开圈子的那半年，凭借出色的文笔，他进入了传统互联网大厂 <span class="emoji">🏢</span></p>
+                    <div class="stats-grid">
+                        <div class="stat-item"><span class="emoji" style="font-size: 40px;">📱</span><p>抖音</p></div>
+                        <div class="stat-item"><span class="emoji" style="font-size: 40px;">💬</span><p>腾讯</p></div>
+                        <div class="stat-item"><span class="emoji" style="font-size: 40px;">🛒</span><p>拼多多</p></div>
+                        <div class="stat-item"><span class="emoji" style="font-size: 40px;">📝</span><p>公关稿</p></div>
+                    </div>
+                    <p>但在传统机构工作一段时间后，他发现自己并不适应。他怀念新兴行业的自由，厌倦了传统互联网公司里无法畅所欲言、处处受限的条条框框 <span class="emoji">⛓️</span></p>
+                    <p><strong>最终，他选择再次回归。</strong> <span class="emoji">🔄</span></p>
+                </div>
+                <div class="page-number">5/10</div>
+            </div>
+            <button class="export-btn" data-card-id="card-5">导出此卡片</button>
+        </div>
+        <div class="card-container">
+            <div id="card-6" class="card card-6 layout-structured">
+                <div class="content-wrapper">
+                    <h2>🔄 不追Meme，只观察新品</h2>
+                    <p>重返牌桌的老司机，带着一套全新的、略显"逆向"的策略。</p>
+                    <div class="tips-list">
+                        <h3 style="text-align: center; color: #2c3e50; margin-bottom: 30px;">📊 新策略核心</h3>
+                        <p><span class="emoji">❌</span> <strong>不参与：</strong>这一轮自己不怎么参与Meme文化</p>
+                        <p><span class="emoji">🔍</span> <strong>主要精力：</strong>观察新项目上线</p>
+                        <p><span class="emoji">📉</span> <strong>核心打法：</strong><span class="highlight">"做空"新上线的热门项目</span></p>
+                    </div>
+                    <p>他认为，在近半年的时间里，做空新上线的热门项目，基本都能获得不错的收益 <span class="emoji">💰</span></p>
+                </div>
+                <div class="page-number">6/10</div>
+            </div>
+            <button class="export-btn" data-card-id="card-6">导出此卡片</button>
+        </div>
+        <div class="card-container">
+            <div id="card-7" class="card card-7 layout-structured">
+                <div class="content-wrapper">
+                    <h2>🎯 如何精准观察？看链上地址和空投</h2>
+                    <p>老司机的逆向观察并非盲目。他有一套自己的观察体系。</p>
+                    <div class="tips-list">
+                        <div class="tip-item">
+                            <div class="tip-number">1</div>
+                            <div class="tip-content">
+                                <div class="tip-title">前十大地址持仓占比 📊</div>
+                                <div class="tip-desc">如果筹码过于集中，或者表现不佳，就是危险信号</div>
+                            </div>
+                        </div>
+                        <div class="tip-item">
+                            <div class="tip-number">2</div>
+                            <div class="tip-content">
+                                <div class="tip-title">空投数量 🎁</div>
+                                <div class="tip-desc">如果早期空投数量巨大，意味着潜在的抛压会很重</div>
+                            </div>
+                        </div>
+                    </div>
+                    <p>一旦发现这些特征，他通常会选择采取<span class="highlight">逆向策略</span> <span class="emoji">🔄</span></p>
+                </div>
+                <div class="page-number">7/10</div>
+            </div>
+            <button class="export-btn" data-card-id="card-7">导出此卡片</button>
+        </div>
+        <div class="card-container">
+            <div id="card-8" class="card card-8 layout-structured">
+                <div class="content-wrapper">
+                    <h2>🏆 半年几乎无败绩，只在SUI上失手过</h2>
+                    <p>这套逆向策略的实战效果如何？</p>
+                    <div class="stats-grid">
+                        <div class="stat-item"><span class="emoji" style="font-size: 48px;">✅</span><p>近半年基本盈利</p></div>
+                        <div class="stat-item"><span class="emoji" style="font-size: 48px;">❌</span><p>唯一亏损：SUI</p></div>
+                    </div>
+                    <div class="tips-list">
+                        <h3 style="text-align: center; color: #2c3e50; margin-bottom: 20px;">💡 小窍门分享</h3>
+                        <p><span class="emoji">📈</span> 密切关注CMC（CoinMarketCap）的市值排行榜</p>
+                        <p><span class="emoji">🎯</span> 每次有新项目一上线就冲到榜单前30名左右时</p>
+                        <p><span class="emoji">🔄</span> 只要采取逆向策略，就很少会失手</p>
+                    </div>
+                </div>
+                <div class="page-number">8/10</div>
+            </div>
+            <button class="export-btn" data-card-id="card-8">导出此卡片</button>
+        </div>
+        <div class="card-container">
+            <div id="card-9" class="card card-9 layout-structured">
+                <div class="content-wrapper">
+                    <h2>🎓 给新手的成长指南</h2>
+                    <p>对于刚刚入圈的新手，老司机给出了三条"成长"建议：</p>
+                    <div class="tips-list">
+                        <div class="tip-item">
+                            <div class="tip-number">1</div>
+                            <div class="tip-content">
+                                <div class="tip-title">管住手 ✋</div>
+                                <div class="tip-desc">最重要的一点，不要被各种KOL或项目方影响，轻易相信别人的推荐，乱操作</div>
+                            </div>
+                        </div>
+                        <div class="tip-item">
+                            <div class="tip-number">2</div>
+                            <div class="tip-content">
+                                <div class="tip-title">多看官媒 📰</div>
+                                <div class="tip-desc">在没有完全搞懂行业之前，多看星球日报、律动这类官方媒体的新闻，建立正确的行业认知</div>
+                            </div>
+                        </div>
+                        <div class="tip-item">
+                            <div class="tip-number">3</div>
+                            <div class="tip-content">
+                                <div class="tip-title">选择头部项目 🏆</div>
+                                <div class="tip-desc">尽量选择市值排名前100或前50的项目。这类项目涨跌幅不会过于夸张，本金有保障，不会一次亏完</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="page-number">9/10</div>
+            </div>
+            <button class="export-btn" data-card-id="card-9">导出此卡片</button>
+        </div>
+
+        <div class="card-container">
+            <div id="card-10" class="card card-10 layout-focal">
+                <div class="content-wrapper">
+                    <h1>🤔 追逐高成长 vs 观察高热度<br>你更信哪条路？</h1>
+                    <p>老司机的故事，提供了一个非主流的视角。</p>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="emoji" style="font-size: 48px;">🚀</span>
+                            <p>寻找下一个<br>高成长项目</p>
+                        </div>
+                        <div class="stat-item">
+                            <span class="emoji" style="font-size: 48px;">🔍</span>
+                            <p>站在热点对立面<br>观察泡沫</p>
+                        </div>
+                    </div>
+                    <p>在充满泡沫与热度的市场里，是努力寻找下一个高成长项目，还是冷静地站在热点的对立面，观察泡沫？</p>
+                    <p><strong>你认为哪条路，更适合当下的市场环境？</strong></p>
+                    <p style="font-size: 32px;">评论区聊聊你的看法👇</p>
+                </div>
+                <div class="page-number">10/10</div>
+            </div>
+            <button class="export-btn" data-card-id="card-10">导出此卡片</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            // --- 关键修复: 创建一个包含所有最佳实践的统一导出配置 ---
+            const exportOptions = {
+                quality: 1,
+                pixelRatio: 2,
+                // 修复 #1: 添加 cacheBust: true。这是解决字体导出问题的核心。
+                cacheBust: true,
+            };
+
+            // --- 代码加固: 为单个卡片导出重构代码 ---
+            document.querySelectorAll('.export-btn').forEach(button => {
+                button.addEventListener('click', async function () {
+                    // 修复 #2: 使用 data-card-id 属性获取卡片节点，使代码更健壮。
+                    const cardId = this.dataset.cardId;
+                    const cardNode = document.getElementById(cardId);
+                    const cardIndex = cardId.split('-')[1];
+
+                    const originalText = this.textContent;
+                    this.textContent = '生成中...';
+                    this.disabled = true;
+                    
+                    try {
+                        const dataUrl = await htmlToImage.toPng(cardNode, exportOptions);
+                        
+                        const link = document.createElement('a');
+                        link.download = `老司机逆袭故事-card-${cardIndex}.png`;
+                        link.href = dataUrl;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    } catch (error) {
+                        console.error(`导出卡片 ${cardIndex} 失败!`, error);
+                        alert(`导出卡片 ${cardIndex} 失败，请打开浏览器控制台(Console)查看错误信息。`);
+                    } finally {
+                        this.textContent = originalText;
+                        this.disabled = false;
+                    }
+                });
+            });
+
+            // --- 代码加固: 为批量导出重构代码 ---
+            const exportAllButton = document.getElementById('exportAll');
+            exportAllButton.addEventListener('click', async function() {
+                const originalText = this.textContent;
+                this.textContent = '🔄 初始化...';
+                this.disabled = true;
+                
+                try {
+                    const zip = new JSZip();
+                    const cardNodes = document.querySelectorAll('.card');
+                    let successCount = 0;
+
+                    for (let i = 0; i < cardNodes.length; i++) {
+                        const node = cardNodes[i];
+                        const cardIndex = i + 1;
+                        this.textContent = `🔄 正在导出 ${cardIndex}/${cardNodes.length}...`;
+                        
+                        try {
+                            const dataUrl = await htmlToImage.toPng(node, exportOptions);
+                            const base64Data = dataUrl.split(',')[1];
+                            zip.file(`老司机逆袭故事-card-${cardIndex}.png`, base64Data, {base64: true});
+                            successCount++;
+                        } catch (error) {
+                            console.error(`批量导出时，第 ${cardIndex} 张卡片失败:`, error);
+                        }
+                        
+                        // 添加微小延时防止浏览器卡顿
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    }
+
+                    if (successCount > 0) {
+                        this.textContent = `📦 正在打包 ${successCount} 张图片...`;
+                        const content = await zip.generateAsync({type: "blob"});
+                        
+                        const link = document.createElement('a');
+                        link.download = "老司机逆袭故事-完整卡片集.zip";
+                        link.href = URL.createObjectURL(content);
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(link.href);
+
+                        if (successCount < cardNodes.length) {
+                             alert(`已成功导出 ${successCount} 张卡片，但有 ${cardNodes.length - successCount} 张失败了。请检查控制台。`);
+                        }
+                    } else {
+                        alert('所有卡片导出均失败，请打开浏览器控制台(Console)查看具体错误。');
+                    }
+                } catch (error) {
+                    console.error('批量导出过程中发生严重错误:', error);
+                    alert('批量导出失败，请检查控制台获取错误信息。');
+                } finally {
+                    this.textContent = originalText;
+                    this.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
