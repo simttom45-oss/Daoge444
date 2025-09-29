@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>孙宇晨十年风云录 - 卡片预览与导出器</title>
+    <!-- 引入 html-to-image 库，用于将HTML元素转换为图片 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+    <!-- 引入 jszip 库，用于创建和下载ZIP压缩文件 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <!-- 引入 lucide-icons 图标库 -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        /* --- CSS样式 (V21.0 一键导出最终版) --- */
+        /* 引入阿里巴巴普惠体 2.0 - 注意：由于字体跨域策略，导出图片时可能无法正常显示，实际部署时需处理字体文件。*/
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+        
+        :root {
+            --bg-color: #FFFFFF; 
+            --text-color: #1a1a1a; 
+            --secondary-text-color: #4a4a4a; 
+            --light-text-color: #aaa; 
+            --watermark-color: #EAEAEA;
+            --font-family: 'Noto Sans SC', 'PingFang SC', 'Helvetica Neue', sans-serif;
+            --accent-blue: #E9F3FB; 
+            --accent-green: #EBF5EE; 
+            --accent-pink: #FCEEEE; 
+            --accent-purple: #f3e5f5; 
+            --accent-yellow: #FFF9E5;
+            --card-width: 1080px; 
+            --card-height: 1440px;
+        }
+        body { 
+            margin: 0; 
+            padding: 0; 
+            background-color: #f0f2f5; 
+            font-family: var(--font-family); 
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .controls { 
+            text-align: center; 
+            padding: 40px; 
+            background: #fff; 
+            border-bottom: 1px solid #ddd; 
+            position: sticky; 
+            top: 0; 
+            z-index: 1000; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .export-all-btn { 
+            padding: 15px 30px; 
+            font-size: 24px; 
+            font-weight: 700; 
+            background-color: #2c3e50; 
+            color: #fff; 
+            border: none; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            transition: all 0.3s ease;
+        }
+        .export-all-btn:hover { 
+            background-color: #34495e; 
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        .export-all-btn:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+        .all-cards-container { 
+            display: flex; 
+            flex-wrap: wrap; 
+            justify-content: center; 
+            gap: 50px; 
+            padding: 50px; 
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .card-container { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            gap: 20px; 
+        }
+        .card {
+            width: var(--card-width); 
+            height: var(--card-height); 
+            background-color: var(--bg-color); 
+            color: var(--text-color);
+            box-sizing: border-box; 
+            padding: 100px; 
+            display: flex; 
+            flex-direction: column;
+            position: relative; 
+            flex-shrink: 0;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            border-radius: 20px;
+            overflow: hidden; /* 确保内容不会溢出圆角 */
+        }
+        .export-btn { 
+            padding: 10px 20px; 
+            font-size: 18px; 
+            font-weight: 500; 
+            background-color: #7f8c8d; 
+            color: #fff; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            transition: all 0.3s ease;
+        }
+        .export-btn:hover { 
+            background-color: #95a5a6;
+            transform: translateY(-2px);
+        }
+        
+        /* 核心版式决策类 */
+        .layout-focal { justify-content: center; align-items: center; text-align: center; }
+        .layout-focal .content-wrapper { width: 100%; max-width: 920px; text-align: center; }
+        .layout-structured { justify-content: flex-start; align-items: center; text-align: left; }
+        .layout-structured .content-wrapper { width: 100%; max-width: 880px; }
+
+        /* 字体清晰度优化与排版 */
+        h1 { 
+            font-size: 88px; 
+            font-weight: 900; 
+            margin: 0 0 40px 0; 
+            line-height: 1.35; 
+            text-shadow: 0 0 1px rgba(0,0,0,0.01); 
+            letter-spacing: 2px;
+        }
+        .layout-structured h1 { font-size: 72px; }
+        h2 { 
+            font-size: 52px; 
+            font-weight: 700; 
+            margin: 20px 0; 
+            display: inline-flex; 
+            align-items: center; 
+        }
+        p { 
+            font-size: 38px; 
+            line-height: 1.8; 
+            margin: 25px 0; 
+            color: var(--secondary-text-color); 
+            font-weight: 400; 
+        }
+        
+        .main-icon { width: 80px; height: 80px; margin-bottom: 40px; color: var(--text-color); }
+        .lucide-icon { stroke-width: 1.5; vertical-align: -0.15em; margin-right: 0.3em; width: 1.1em; height: 1.1em; }
+
+        .footer { 
+            position: absolute; 
+            bottom: 60px; 
+            left: 0; 
+            right: 0; 
+            text-align: center; 
+            font-size: 30px; 
+            color: var(--light-text-color); 
+            font-weight: 400;
+        }
+        .watermark { 
+            position: absolute; 
+            bottom: 60px; 
+            left: 100px; 
+            font-size: 28px; 
+            color: var(--watermark-color); 
+            font-weight: 700;
+        }
+        .highlight {
+            background: linear-gradient(120deg, var(--accent-yellow) 0%, #ffd8a8 100%);
+            padding: 2px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button id="exportAll" class="export-all-btn">🚀 一键导出全部卡片为 ZIP</button>
+    </div>
+    <div class="all-cards-container">
+        
+        <!-- Card 1: 封面 -->
+        <div class="card-container">
+            <div class="card layout-focal" style="background-color: var(--accent-yellow);">
+                <div class="content-wrapper">
+                    <h1>他被骂10年“孙割”<br>如今却要封神了？</h1>
+                    <p>一个在规则缝隙里疯狂舞动的男人，<br>一场<span class="highlight">天才的逆袭</span>，还是<span class="highlight">骗局的胜利</span>？</p>
+                </div>
+                <div class="watermark">SUN YUCHEN'S STORY</div>
+                <div class="footer"><span class="page-number">1 / 11</span></div>
+            </div>
+            <button class="export-btn">导出卡片 1</button>
+        </div>
+
+        <!-- Card 2: 高考 -->
+        <div class="card-container">
+            <div class="card layout-structured">
+                <div class="content-wrapper">
+                    <h1>🎓 从高考“钻空子”上北大</h1>
+                    <p>孙宇晨的故事，从高中就充满“投机”色彩。他并非埋头苦读，而是研究高考规则漏洞，通过新概念作文大赛一等奖的<span class="highlight">降20分特权</span>，和移民青海的<span class="highlight">低分优势</span>，成功踏入北大校门。🎯</p>
+                </div>
+                <div class="watermark">THE BEGINNING</div>
+                <div class="footer"><span class="page-number">2 / 11</span></div>
+            </div>
+            <button class="export-btn">导出卡片 2</button>
+        </div>
+
+        <!-- Card 3: 大学 -->
+        <div class="card-container">
+            <div class="card layout-structured">
+                <div class="content-wrapper">
+                    <h1>🎭 北大学霸人设翻车？<br>他却悟出“黑红也是红”</h1>
+                    <p>进入北大，他模仿韩寒，通过狂喷母校迅速成为网红。后因抄袭事件惨遭网暴，却悟出终身受用的道理：<span class="highlight">“黑红也是红”</span>，负面流量也是流量。🔥</p>
+                </div>
+                <div class="watermark">THE EPIPHANY</div>
+                <div class="footer"><span class="page-number">3 / 11</span></div>
+            </div>
+            <button class="export-btn">导出卡片 3</button>
+        </div>
+
+        <!-- Card 4: 孙割由来 -->
+        <div class="card-container">
+            <div class="card layout-structured" style="background-color: var(--accent-pink);">
+                <div class="content-wrapper">
+                    <h1>💸 融资6亿美金后<br>他连夜跑路</h1>
+                    <p>2017年，他精准卡位，在国家叫停ICO前一天完成发币，融资6亿美金后卷款跑路美国。后将波场市值做到暴涨200倍，便立刻套现120亿离场，无数投资者倾家荡产。“孙割”名号从此叫响。🔪</p>
+                </div>
+                <div class="watermark">"SUN THE RIPPER"</div>
+                <div class="footer"><span class="page-number">4 / 11</span></div>
+            </div>
+            <button class="export-btn">导出卡片 4</button>
+        </div>
+
+        <!-- Card 5: 流量之王 -->
+        <div class="card-container">
+            <div class="card layout-structured">
+                <div class="content-wrapper">
+                    <h1>👑 祖传100万与三戏巴菲特</h1>
+                    <p>跑路美国后，他开始疯狂“蹭流量”。无论是王思聪还是OFO，他都带着“祖传的100万”出现，宣称要还债，但从未兑现。最经典的是<span class="highlight">三戏巴菲特</span>，用457万美金的午餐，让全世界认识了他和波场。📈</p>
+                </div>
+                <div class="watermark">KING OF HYPE</div>
+                <div class="footer"><span class="page-number">5 / 11</span></div>
+            </div>
+            <button class="export-btn">导出卡片 5</button>
+        </div>
+
+        <!-- Card 6: 金蝉脱壳 -->
+        <div class="card-container">
+            <div class="card layout-structured" style="background-color: var(--accent-green);">
+                <div class="content-wrapper">
+                    <h1>🛂 当赵长鹏被抓<br>他如何用一本护照规避风险？</h1>
+                    <p>当被美国SEC指控并通缉时，他花费100万美元入籍格林纳达，摇身一变成该国WTO大使。这个身份让他获得<span class="highlight">外交豁免权</span>，成功上演“金蝉脱壳”。🛡️</p>
+                </div>
+                <div class="watermark">THE GREAT ESCAPE</div>
+                <div class="footer"><span class="page-number">6 / 11</span></div>
+            </div>
+            <button class="export-btn">导出卡片 6</button>
+        </div>
+
+        <!-- Card 7: 护城河 -->
+        <div class="card-container">
+            <div class="card layout-structured">
+                <div class="content-wrapper">
+                    <h1>🤝 斥资7500万美金<br>成为特朗普的“榜一大哥”</h1>
+                    <p>为彻底摆脱风险，他斥资7500万美元，大举投资特朗普代币，成为最大持有者。最终，他成了白宫座上宾，SEC的调查不了了之。他用资本撬动政治，<span class="highlight">将监管风险化为护城河</span>。💼</p>
+                </div>
+                <div class="watermark">THE MOAT</div>
+                <div class="footer"><span class="page-number">7 / 11</span></div>
+            </div>
+            <button class="export-btn">导出卡片 7</button>
+        </div>
+
+        <!-- Card 8: 纳斯达克 -->
+        <div class="card-container">
+            <div class="card layout-structured" style="background-color: var(--accent-blue);">
+                <div class="content-wrapper">
+                    <h1>🔔 把波场送进纳斯达克</h1>
+                    <p>解决监管风险后，他收购美股上市公司，成功借壳上市，将波场送到纳斯达克。他正式进入正统金融市场，撬开了华尔街的财富阀门。上市当日，<span class="highlight">身家达到200亿美元</span>。🏦</p>
+                </div>
+                <div class="watermark">THE ENDGAME</div>
+                <div class="footer"><span class="page-number">8 / 11</span></div>
+            </div>
+            <button class="export-btn">导出卡片 8</button>
+        </div>
+
+        <!-- Card 9: 太空 -->
+        <div class="card-container">
+            <div class="card layout-focal">
+                <div class="content-wrapper">
+                    <h1>🚀 把波场LOGO带上太空</h1>
+                    <p>他豪掷2800万美元，搭乘蓝色起源火箭进入太空。当他在失重状态下展开波场LOGO旗帜时，这场持续10年的流量游戏，<span class="highlight">达到了引力之外的巅峰</span>。🌌</p>
+                </div>
+                <div class="watermark">THE COSMIC PR</div>
+                <div class="footer"><span class="page-number">9 / 11</span></div>
+            </div>
+            <button class="export-btn">导出卡片 9</button>
+        </div>
+        
+        <!-- Card 10: 口碑逆转 -->
+        <div class="card-container">
+            <div class="card layout-structured">
+                <div class="content-wrapper">
+                    <h1>📜 “待我入关时，<br>自有大儒为我辨经”</h1>
+                    <p>当他完成上市、进入太空、身家暴涨后，口碑开始逆转。曾经的骂声，逐渐被“天才”、“野心家”的赞美取代。当一个人成功到极致，<span class="highlight">历史似乎都可以被重新解读</span>。🤔</p>
+                </div>
+                <div class="watermark">THE REVERSAL</div>
+                <div class="footer"><span class="page-number">10 / 11</span></div>
+            </div>
+            <button class="export-btn">导出卡片 10</button>
+        </div>
+
+        <!-- Card 11: 互动 -->
+        <div class="card-container">
+            <div class="card layout-focal" style="background-color: #2c3e50; color: white;">
+                <div class="content-wrapper">
+                    <h1 style="color: white;">天才还是骗子？</h1>
+                    <p style="color: #bdc3c7;">这个在规则缝隙里跳舞的男人，你怎么看？<br>在评论区聊聊你的看法 👇</p>
+                </div>
+                <div class="watermark" style="color: #46627f;">JOIN THE DISCUSSION</div>
+                <div class="footer" style="color: #7f8c8d;"><span class="page-number">11 / 11</span></div>
+            </div>
+            <button class="export-btn">导出卡片 11</button>
+        </div>
+
+    </div>
+
+    <script>
+        // 在DOM加载完成后执行脚本
+        document.addEventListener('DOMContentLoaded', function () {
+            // 激活lucide图标
+            lucide.createIcons();
+
+            // --- 单个卡片导出功能 ---
+            const exportButtons = document.querySelectorAll('.export-btn');
+            exportButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    const cardNode = this.previousElementSibling; // 获取按钮前的 .card 元素
+                    const cardTitle = cardNode.querySelector('h1').textContent.substring(0, 20).trim(); // 使用标题作为文件名的一部分
+                    const pageNumberText = cardNode.querySelector('.page-number').textContent.replace('/', '-');
+                    const fileName = `card-${pageNumberText}-${cardTitle}.png`;
+
+                    // 调用 html-to-image 库生成PNG
+                    htmlToImage.toPng(cardNode, { 
+                        quality: 1, 
+                        pixelRatio: 2, // 使用2倍像素比率以获得更高清的图片
+                        // 尝试嵌入字体样式，但这在某些浏览器和CDN配置下可能因CORS策略而失败
+                        fontEmbedCss: Array.from(document.styleSheets)
+                                         .map(sheet => {
+                                             try {
+                                                 return Array.from(sheet.cssRules).map(rule => rule.cssText).join('');
+                                             } catch (e) {
+                                                 // 忽略由于跨域限制无法访问的样式表
+                                                 console.warn('Cannot access stylesheet:', sheet.href);
+                                                 return '';
+                                             }
+                                         }).join('')
+                    })
+                    .then(function (dataUrl) {
+                        // 创建一个临时的a标签来触发下载
+                        const link = document.createElement('a');
+                        link.download = fileName;
+                        link.href = dataUrl;
+                        link.click();
+                    })
+                    .catch(function (error) {
+                        console.error('导出失败，错误信息:', error);
+                        alert('抱歉，图片导出失败。请检查浏览器控制台获取更多信息。');
+                    });
+                });
+            });
+
+            // --- 全部导出为ZIP功能 ---
+            const exportAllButton = document.getElementById('exportAll');
+            exportAllButton.addEventListener('click', async function() {
+                this.textContent = '⏳ 正在导出，请稍候... (0/11)';
+                this.disabled = true;
+                
+                const zip = new JSZip();
+                const cardNodes = document.querySelectorAll('.card');
+
+                for (let i = 0; i < cardNodes.length; i++) {
+                    const node = cardNodes[i];
+                    const cardTitle = node.querySelector('h1').textContent.substring(0, 20).trim();
+                    const pageNumberText = node.querySelector('.page-number').textContent.replace('/', '-');
+                    const fileName = `card-${pageNumberText}-${cardTitle}.png`;
+                    
+                    // 更新按钮文本以显示进度
+                    this.textContent = `⏳ 正在导出，请稍候... (${i + 1}/${cardNodes.length})`;
+
+                    try {
+                        const dataUrl = await htmlToImage.toPng(node, { 
+                            quality: 1, 
+                            pixelRatio: 2,
+                            fontEmbedCss: Array.from(document.styleSheets)
+                                         .map(sheet => {
+                                             try {
+                                                 return Array.from(sheet.cssRules).map(rule => rule.cssText).join('');
+                                             } catch (e) { return ''; }
+                                         }).join('')
+                        });
+                        // 从dataURL中提取base64数据部分
+                        const base64Data = dataUrl.split(',')[1];
+                        // 将图片文件添加到ZIP中
+                        zip.file(fileName, base64Data, {base64: true});
+                    } catch (error) {
+                       console.error(`导出卡片 ${pageNumberText} 失败:`, error);
+                    }
+                }
+
+                // 生成ZIP文件并触发下载
+                zip.generateAsync({type:"blob"}).then((content) => {
+                    const link = document.createElement('a');
+                    link.download = "孙宇晨十年风云录-全部卡片.zip";
+                    link.href = URL.createObjectURL(content);
+                    link.click();
+                    
+                    // 恢复按钮状态
+                    this.textContent = '🚀 一键导出全部卡片为 ZIP';
+                    this.disabled = false;
+                });
+            });
+        });
+    </script>
+</body>
+</html>
