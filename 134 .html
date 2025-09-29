@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>All Cards Preview & Exporter (Fixed)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <style>
+        /* --- CSS样式 (V21.0 一键导出最终版) --- */
+        /* 引入阿里巴巴普惠体 2.0 */
+        @import url('https://fonts.googleapis.com/css2?family=Alibaba+PuHuiTi+2.0&display=swap');
+        
+        :root {
+            --bg-color: #FFFFFF; --text-color: #1a1a1a; --secondary-text-color: #555; --light-text-color: #aaa; --watermark-color: #EAEAEA;
+            --font-family: 'Alibaba PuHuiTi 2.0', 'PingFang SC', sans-serif;
+            --accent-blue: #E9F3FB; --accent-green: #EBF5EE; --accent-pink: #FCEEEE; --accent-purple: #f3e5f5; --accent-yellow: #FFF9E5;
+            --card-width: 1080px; --card-height: 1440px;
+        }
+        body { margin: 0; padding: 0; background-color: #f0f2f5; font-family: var(--font-family); }
+        .controls { text-align: center; padding: 40px; background: #fff; border-bottom: 1px solid #ddd; position: sticky; top: 0; z-index: 1000; }
+        .export-all-btn { padding: 15px 30px; font-size: 24px; font-weight: 700; background-color: #2c3e50; color: #fff; border: none; border-radius: 10px; cursor: pointer; }
+        .export-all-btn:hover { background-color: #34495e; }
+        .all-cards-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 50px; padding: 50px; }
+        .card-container { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        .card {
+            width: var(--card-width); height: var(--card-height); background-color: var(--bg-color); color: var(--text-color);
+            box-sizing: border-box; padding: 100px; display: flex; flex-direction: column;
+            position: relative; flex-shrink: 0;
+        }
+        .export-btn { padding: 10px 20px; font-size: 18px; font-weight: 500; background-color: #7f8c8d; color: #fff; border: none; border-radius: 8px; cursor: pointer; }
+        .export-btn:hover { background-color: #95a5a6; }
+        
+        /* 核心版式决策类 */
+        .layout-focal { justify-content: center; align-items: center; text-align: center; }
+        .layout-focal .content-wrapper { width: 100%; max-width: 920px; text-align: center; }
+        .layout-structured { justify-content: center; align-items: center; text-align: left; }
+        .layout-structured .content-wrapper { width: 100%; max-width: 880px; }
+
+        /* 字体清晰度优化 */
+        h1 { font-size: 88px; font-weight: 900; margin: 0; line-height: 1.35; text-shadow: 0 0 1px rgba(0,0,0,0.01); }
+        h2 { font-size: 52px; font-weight: 700; margin: 20px 0; display: inline-flex; align-items: center; }
+        p { font-size: 38px; line-height: 1.8; margin: 25px 0; color: var(--secondary-text-color); font-weight: 400; }
+        
+        .main-icon { font-size: 80px; margin-bottom: 40px; color: var(--text-color); }
+        .lucide-icon { stroke-width: 1.5; vertical-align: -0.15em; margin-right: 0.3em; width: 1.1em; height: 1.1em; }
+
+        .footer { position: absolute; bottom: 60px; left: 0; right: 0; text-align: center; font-size: 30px; color: var(--light-text-color); font-weight: 400;}
+        .watermark { position: absolute; bottom: 60px; left: 100px; font-size: 28px; color: var(--watermark-color); font-weight: 400;}
+        .page-number { position: absolute; bottom: 60px; right: 100px; font-size: 30px; color: var(--light-text-color); font-weight: 400; }
+        
+        /* 特殊样式 */
+        .highlight { color: #e74c3c; font-weight: 700; }
+        .emoji { font-size: 1.2em; margin: 0 0.2em; }
+        .quote { font-style: italic; color: #7f8c8d; border-left: 5px solid #bdc3c7; padding-left: 30px; margin: 30px 0; }
+        .step { margin: 30px 0; padding: 25px; background: var(--accent-blue); border-radius: 15px; }
+        .step-number { background: #3498db; color: white; border-radius: 50%; width: 50px; height: 50px; display: inline-flex; align-items: center; justify-content: center; margin-right: 20px; font-weight: 700; }
+        
+        /* 背景渐变 */
+        .bg-gradient-1 { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .bg-gradient-2 { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; }
+        .bg-gradient-3 { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+        .bg-gradient-4 { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+        .bg-gradient-5 { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <button id="exportAll" class="export-all-btn">📱 一键导出全部卡片为 ZIP</button>
+    </div>
+    <div class="all-cards-container">
+        
+        <div class="card-container">
+            <div class="card layout-focal bg-gradient-1">
+                <div class="content-wrapper">
+                    <div class="main-icon">🎭</div>
+                    <h1>2025年的市场活跃期<br/>只是2017年的一场"翻拍"？</h1>
+                    <p class="quote" style="color: rgba(255,255,255,0.9);">历史不会简单重复，但总是押着相同的韵脚。</p>
+                    <p style="color: rgba(255,255,255,0.8);">如果你经历过2017年的ICO热潮，那么看到如今pump的热度，一定会有一种<span class="highlight">"剧本重演"</span>的既视感 <span class="emoji">🔄</span></p>
+                    <p style="color: rgba(255,255,255,0.8);">但这一次，演员和舞台都换了。当年的新人，如今变成了华尔街的基金经理；当年的交易所"上新"，如今变成了纳斯达克的ETF代码 <span class="emoji">📊</span></p>
+                    <p style="color: rgba(255,255,255,0.8);">今天，我们就来深度复盘这场"翻拍大戏"，看看资金迁徙的路径到底发生了什么变化。</p>
+                </div>
+                <div class="page-number">1/10</div>
+            </div>
+            <button class="export-btn">导出此卡片</button>
+        </div>
+
+        <div class="card-container">
+            <div class="card layout-structured">
+                <div class="content-wrapper">
+                    <h2><span class="emoji">⏰</span> ICO热潮与交易所的"早期选择"</h2>
+                    <p>让我们先把时钟拨回2017年。那是一个写份白皮书、部署个ERC-20代币就能轻松吸引关注的年代 <span class="emoji">📄</span></p>
+                    <p>但当时的基础设施还很薄弱：Uniswap还没上线，绝大多数新人连钱包都不会用，唯一的入门渠道就是Coinbase等中心化交易所 <span class="emoji">🏪</span></p>
+                    <p>而那时的Coinbase，货架上只有<span class="highlight">BTC、ETH、LTC三个选项</span> <span class="emoji">📋</span></p>
+                    <p>结果就是，链内极客直接向合约里投入ETH，而圈外的新人只能在交易所关注这几个"门面项目"，导致BTC和ETH成了外部资金最先涌入的价值锚点 <span class="emoji">⚓</span></p>
+                </div>
+                <div class="page-number">2/10</div>
+            </div>
+            <button class="export-btn">导出此卡片</button>
+        </div>
+
+        <div class="card-container">
+            <div class="card layout-structured bg-gradient-2">
+                <div class="content-wrapper">
+                    <h2 style="color: white;"><span class="emoji">🚀</span> 5分钟发项目的pump</h2>
+                    <p style="color: rgba(255,255,255,0.9);">快进到2024-2025年，我们看到了一个无比熟悉的剧本。</p>
+                    <p style="color: rgba(255,255,255,0.9);">以pump为代表的平台，将"发行项目"的流程压缩到了<span class="highlight" style="color: #FFE5E5;">5分钟和1美元的铸造费</span> <span class="emoji">⏱️</span></p>
+                    <p style="color: rgba(255,255,255,0.9);">平台累计收入已超<span class="highlight" style="color: #FFE5E5;">7亿美元</span> <span class="emoji">💰</span></p>
+                    <p style="color: rgba(255,255,255,0.9);">链内极客在Solana Launchpad里寻找机会，媒体追踪报道，KOL分析解读，监管也开始密切关注 <span class="emoji">👀</span></p>
+                    <p style="color: rgba(255,255,255,0.9);">这一切，都和当年的ICO热潮如出一辙，只是效率更高，节奏更快。</p>
+                </div>
+                <div class="page-number">3/10</div>
+            </div>
+            <button class="export-btn">导出此卡片</button>
+        </div>
+
+        <div class="card-container">
+            <div class="card layout-focal bg-gradient-3">
+                <div class="content-wrapper">
+                    <div class="main-icon">🔄</div>
+                    <h1 style="font-size: 72px;">但，这一次<br/>"新人"的入口<br/>换了</h1>
+                    <p style="font-size: 48px; color: #2c3e50; font-weight: 700;">外部资金的"关注按钮"<br/>已从交易所迁往华尔街</p>
+                    <p>这轮周期最大的不同，在于圈外资金的入场方式发生了根本性的变化。</p>
+                    <p>当年的新人，紧盯着的是交易所的"上新"列表。而今天，当机构和传统资金想要入场时，他们看向的，是<span class="highlight">纳斯达克与纽交所屏幕上跳动的代码</span>——比特币与以太坊的现货ETF <span class="emoji">📈</span></p>
+                </div>
+                <div class="page-number">4/10</div>
+            </div>
+            <button class="export-btn">导出此卡片</button>
+        </div>
+
+        <div class="card-container">
+            <div class="card layout-structured">
+                <div class="content-wrapper">
+                    <h2><span class="emoji">🏛️</span> 比特币/以太坊ETF：机构的"合规菜单"</h2>
+                    <p>ETF，就是这轮活跃期给机构准备的"Coinbase"。</p>
+                    <div class="step">
+                        <p><span class="emoji">🎯</span> 贝莱德的IBIT，仅用<span class="highlight">374天</span>资产管理规模就冲破<span class="highlight">800亿美元</span>，刷新了ETF史的速度纪录 <span class="emoji">📊</span></p>
+                    </div>
+                    <div class="step">
+                        <p><span class="emoji">⚡</span> 以太坊现货ETF在7月创下了<span class="highlight">7.27亿美元</span>的单日净流入，八连正的吸金势头直接把ETH价格推向了半年的高点 <span class="emoji">📈</span></p>
+                    </div>
+                    <p>这些合规产品的作用，和2017年Coinbase的三项目列表完全相同：给新人（这次是机构）一份简单的菜单，当按钮只有BTC和ETH时，他们就只能先关注这两个 <span class="emoji">🎯</span></p>
+                </div>
+                <div class="page-number">5/10</div>
+            </div>
+            <button class="export-btn">导出此卡片</button>
+        </div>
+
+        <div class="card-container">
+            <div class="card layout-structured bg-gradient-4">
+                <div class="content-wrapper">
+                    <h2><span class="emoji">🏢</span> "数字资产概念股"：传统基金的"备选仓位"</h2>
+                    <p>除了ETF，另一批"关注按钮"也已就位，那就是"数字资产概念股"——那些大量持有比特币的上市公司。</p>
+                    <div class="step">
+                        <p><span class="highlight">MicroStrategy</span>：每隔几周就用可转债继续增持，持仓已超<span class="highlight">60万枚BTC</span> <span class="emoji">🚀</span></p>
+                    </div>
+                    <div class="step">
+                        <p><span class="highlight">GameStop</span>：5月一口气买下<span class="highlight">5亿美元</span>的比特币，并宣布未来还会追加 <span class="emoji">🎮</span></p>
+                    </div>
+                    <p>这些公司，把自己变成了可以在美股盘面直接交易的"比特币ETF 2.0"。对于传统基金来说，关注它们的股票，比自己上链开钱包要省事得多。它们就是2025年版的"交易所新项目" <span class="emoji">💡</span></p>
+                </div>
+                <div class="page-number">6/10</div>
+            </div>
+            <button class="export-btn">导出此卡片</button>
+        </div>
+
+        <div class="card-container">
+            <div class="card layout-focal bg-gradient-5">
+                <div class="content-wrapper">
+                    <div class="main-icon">🎯</div>
+                    <h1>殊途同归</h1>
+                    <h2 style="color: #2c3e50;">外部资金的第一站<br/>依然是BTC和ETH</h2>
+                    <p style="color: #2c3e50;">看懂了吗？无论是2017年守在Coinbase前的新人，还是2025年坐在彭博终端前的基金经理，他们面临的处境惊人地相似。</p>
+                    <p style="color: #2c3e50;">由于<span class="highlight">合规性、便捷性和认知惯性</span>，圈外大规模资金入场的第一站，必然是市场上最大、最合规、最容易理解的标的。</p>
+                    <p style="color: #2c3e50; font-weight: 700; font-size: 44px;">所以，尽管入口从交易所App变成了ETF代码，但资金流入的路径依然是：<span class="highlight">先BTC，后ETH</span> <span class="emoji">🔄</span></p>
+                </div>
+                <div class="page-number">7/10</div>
+            </div>
+            <button class="export-btn">导出此卡片</button>
+        </div>
+
+        <div class="card-container">
+            <div class="card layout-structured">
+                <div class="content-wrapper">
+                    <h2><span class="emoji">⚡</span> 唯一不同的是：节奏更快了</h2>
+                    <h2 style="font-size: 40px; color: #e74c3c;">DEX已就位，资金循环被极限压缩</h2>
+                    <p>与2017年最大的不同，在于如今的链上基础设施已经高度成熟。</p>
+                    <div class="step">
+                        <p><span class="emoji">🕐</span> <span class="highlight">当年</span>：ICO项目需要苦等中心化交易所挂牌才有流动性</p>
+                    </div>
+                    <div class="step">
+                        <p><span class="emoji">⚡</span> <span class="highlight">现在</span>：Launchpad自带AMM（自动做市商），链上价格可以先行一步</p>
+                    </div>
+                    <p>等ETF、概念股这些链外资金反应过来时，行情往往已经翻了数倍 <span class="emoji">📈</span></p>
+                    <p class="highlight" style="font-size: 44px;">这意味着，从"链内极客试错"到"大众关注蓝筹"的节奏，被压缩得更短、也更剧烈了 <span class="emoji">🎢</span></p>
+                </div>
+                <div class="page-number">8/10</div>
+            </div>
+            <button class="export-btn">导出此卡片</button>
+        </div>
+
+        <div class="card-container">
+            <div class="card layout-structured">
+                <div class="content-wrapper">
+                    <h2><span class="emoji">🎯</span> 【保姆级】如何像"机构版新人"一样思考？</h2>
+                    <p>理解了这套逻辑，我们的策略也就清晰了。把自己想象成一个手握巨资、但对圈内一无所知的"机构版新人"：</p>
+                    <div class="step">
+                        <span class="step-number">1</span>
+                        <div style="display: inline-block;">
+                            <p style="margin: 0;"><span class="emoji">📋</span> 先关注菜单上现成的、最稳妥的<span class="highlight">BTC和ETH</span></p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <span class="step-number">2</span>
+                        <div style="display: inline-block;">
+                            <p style="margin: 0;"><span class="emoji">🔍</span> 在理解了"持有等于看好Beta"后，会开始寻找能包装成他们熟悉的收益模型的产品，比如<span class="highlight">LST、RWA、质押收益产品</span>等</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <span class="step-number">3</span>
+                        <div style="display: inline-block;">
+                            <p style="margin: 0;"><span class="emoji">🚀</span> 要获得真正的高Beta（超额回报），就需要在机构的"菜单"扩容之前，提前在链上布局那些<span class="highlight">原生的、低市值的潜力资产</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="page-number">9/10</div>
+            </div>
+            <button class="export-btn">导出此卡片</button>
+        </div>
+
+        <div class="card-container">
+            <div class="card layout-focal bg-gradient-1">
+                <div class="content-wrapper">
+                    <div class="main-icon">🤔</div>
+                    <h1 style="font-size: 72px;">剧本没变<br/>舞台换了<br/>你看懂了吗？</h1>
+                    <p style="color: rgba(255,255,255,0.9);">2017年，我们这些新人只敢在App上点"购买比特币"；2025年，华尔街的精英们也一样。</p>
+                    <p style="color: rgba(255,255,255,0.9);">历史的车轮滚滚向前，但资金总是先流向最容易理解的地方。本轮活跃期的"交易所上新"，已经悄悄换壳成了ETF和"数字资产概念股"，而剧本里的主角，依旧是<span class="highlight" style="color: #FFE5E5;">BTC和ETH</span> <span class="emoji">🎭</span></p>
+                    <p style="color: rgba(255,255,255,0.9); font-size: 44px; font-weight: 700;">你看懂这个新舞台的游戏规则了吗？<br/>评论区聊聊你的看法👇</p>
+                </div>
+                <div class="page-number">10/10</div>
+            </div>
+            <button class="export-btn">导出此卡片</button>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const exportButtons = document.querySelectorAll('.export-btn');
+            
+            exportButtons.forEach(button => {
+                button.addEventListener('click', function () {
+                    const cardNode = this.previousElementSibling; // The .card element
+                    const pageNumber = cardNode.querySelector('.page-number').textContent.replace('/', '-');
+                    
+                    // 【BUG修复】移除 fontEmbedCss 选项
+                    htmlToImage.toPng(cardNode, { 
+                        quality: 1, 
+                        pixelRatio: 1
+                    })
+                    .then(function (dataUrl) {
+                        const link = document.createElement('a');
+                        link.download = `crypto-market-card-${pageNumber}.png`;
+                        link.href = dataUrl;
+                        link.click();
+                    })
+                    .catch(function (error) {
+                        console.error('oops, something went wrong!', error);
+                    });
+                });
+            });
+
+            const exportAllButton = document.getElementById('exportAll');
+            exportAllButton.addEventListener('click', async function() {
+                this.textContent = '正在导出... (0/10)';
+                this.disabled = true;
+                const zip = new JSZip();
+                const cardNodes = document.querySelectorAll('.card');
+
+                for (let i = 0; i < cardNodes.length; i++) {
+                    const node = cardNodes[i];
+                    const pageNumber = node.querySelector('.page-number').textContent.replace('/', '-');
+                    this.textContent = `正在导出... (${i + 1}/${cardNodes.length})`;
+                    try {
+                        // 【BUG修复】移除 fontEmbedCss 选项
+                        const dataUrl = await htmlToImage.toPng(node, { 
+                            quality: 1, 
+                            pixelRatio: 1
+                        });
+                        const base64Data = dataUrl.split(',')[1];
+                        zip.file(`crypto-market-card-${pageNumber}.png`, base64Data, {base64: true});
+                    } catch (error) {
+                         console.error(`Failed to export card ${pageNumber}:`, error);
+                    }
+                }
+
+                zip.generateAsync({type:"blob"}).then((content) => {
+                    const link = document.createElement('a');
+                    link.download = "crypto-market-analysis-cards.zip";
+                    link.href = URL.createObjectURL(content);
+                    link.click();
+                    this.textContent = '📱 一键导出全部卡片为 ZIP';
+                    this.disabled = false;
+                });
+            });
+        });
+    </script>
+</body>
+</html>
