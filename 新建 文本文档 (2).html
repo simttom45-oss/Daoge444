@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nano Banana AI 写真馆 - 界面预览</title>
+    <style>
+        :root {
+            --primary: #FF4B4B; /* Streamlit 风格红 */
+            --bg: #FFFFFF;
+            --sidebar-bg: #F0F2F6;
+            --text: #31333F;
+            --gray: #808495;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            color: var(--text);
+            background-color: var(--bg);
+        }
+
+        /* 侧边栏样式 */
+        .sidebar {
+            width: 300px;
+            background-color: var(--sidebar-bg);
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #ddd;
+            flex-shrink: 0;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 2rem;
+            color: var(--text);
+        }
+
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 2rem 1rem;
+            text-align: center;
+            background: white;
+            cursor: pointer;
+            transition: 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+        }
+
+        .upload-preview {
+            max-width: 100%;
+            border-radius: 4px;
+            display: none; /* 默认隐藏 */
+            margin-top: 10px;
+        }
+
+        /* 主内容区样式 */
+        .main-content {
+            flex-grow: 1;
+            padding: 2rem 4rem;
+            overflow-y: auto;
+        }
+
+        .header {
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin: 0 0 0.5rem 0;
+        }
+
+        .header p {
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+
+        /* 按钮样式 */
+        .btn-generate {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 100%;
+            margin-bottom: 2rem;
+        }
+
+        .btn-generate:hover {
+            background-color: #d93e3e;
+        }
+
+        .btn-generate:disabled {
+            background-color: #fabzbz;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* 进度条 */
+        .progress-container {
+            width: 100%;
+            background-color: #eee;
+            border-radius: 4px;
+            height: 8px;
+            margin-bottom: 1rem;
+            display: none; /* 默认隐藏 */
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .status-text {
+            font-size: 0.9rem;
+            color: var(--gray);
+            margin-bottom: 1.5rem;
+            min-height: 1.2em;
+        }
+
+        /* 图片网格 */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border: 1px solid #eee;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-image-box {
+            width: 100%;
+            aspect-ratio: 2/3;
+            background-color: #f0f0f0;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .card img.loaded {
+            opacity: 1;
+        }
+
+        .card-title {
+            padding: 0.8rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            border-top: 1px solid #eee;
+        }
+
+        /* 加载动画 (Skeleton) */
+        .skeleton {
+            animation: shimmer 1.5s infinite linear;
+            background: linear-gradient(to right, #f0f0f0 4%, #e0e0e0 25%, #f0f0f0 36%);
+            background-size: 1000px 100%;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            z-index: 2;
+            display: none; /* JS控制显示 */
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 响应式 */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { width: auto; height: auto; border-bottom: 1px solid #ddd; }
+            .main-content { padding: 1rem; }
+            .grid { grid-template-columns: repeat(1, 1fr); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+        <div class="logo">📸 Nano Portrait</div>
+        <p style="font-size:0.9rem; color:var(--gray)">1. 上传您的照片</p>
+        
+        <div class="upload-area" id="uploadBtn" onclick="document.getElementById('fileInput').click()">
+            <div id="uploadPlaceholder">
+                <span style="font-size: 2rem;">☁️</span><br>
+                <span>点击上传照片</span><br>
+                <span style="font-size: 0.8rem; color: #999">支持 JPG, PNG</span>
+            </div>
+            <img id="userPreview" class="upload-preview" alt="User Upload">
+        </div>
+        <input type="file" id="fileInput" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+        
+        <div style="margin-top: 2rem; font-size: 0.8rem; color: #888; line-height: 1.5;">
+            <strong>提示：</strong><br>
+            • 请使用正脸照片<br>
+            • 避免佩戴墨镜<br>
+            • 光线充足效果更佳
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <div class="header">
+            <h1>AI 智能写真馆</h1>
+            <p>上传一张照片，Nano Banana 模型将为您生成 6 种不同风格的专业写真。</p>
+        </div>
+
+        <button id="generateBtn" class="btn-generate" onclick="startGeneration()" disabled>
+            ✨ 开始生成所有风格
+        </button>
+
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="status-text" id="statusText">准备就绪，请先上传照片...</div>
+
+        <!-- 图片展示网格 -->
+        <div class="grid" id="gridContainer">
+            <!-- 卡片会通过 JS 动态生成 -->
+        </div>
+    </div>
+
+    <script>
+        // 定义6种风格配置
+        const styles = [
+            { name: "👔 1. 美式职场精英", keyword: "business man portrait suit" },
+            { name: "🆔 2. 韩系清透证件照", keyword: "korean id photo portrait" },
+            { name: "🎾 3. 老钱风度假", keyword: "polo ralph lauren style portrait" },
+            { name: "☕ 4. 胶片感街头抓拍", keyword: "moody street photography portrait" },
+            { name: "🕶️ 5. 高定黑白大片", keyword: "black and white fashion portrait" },
+            { name: "🎋 6. 新中式国潮", keyword: "asian aesthetics portrait" }
+        ];
+
+        // 初始化网格占位符
+        const grid = document.getElementById('gridContainer');
+        styles.forEach((style, index) => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <div class="card-image-box" id="box-${index}">
+                    <span style="color:#ccc; font-size:0.9rem">等待生成...</span>
+                </div>
+                <div class="card-title">${style.name}</div>
+            `;
+            grid.appendChild(card);
+        });
+
+        // 处理文件上传预览
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.getElementById('userPreview');
+                    img.src = e.target.result;
+                    img.style.display = 'block';
+                    document.getElementById('uploadPlaceholder').style.display = 'none';
+                    
+                    // 激活生成按钮
+                    const btn = document.getElementById('generateBtn');
+                    btn.disabled = false;
+                    document.getElementById('statusText').innerText = "照片已上传，点击上方按钮开始生成。";
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // 模拟生成过程
+        async function startGeneration() {
+            const btn = document.getElementById('generateBtn');
+            const progContainer = document.getElementById('progressContainer');
+            const progBar = document.getElementById('progressBar');
+            const statusText = document.getElementById('statusText');
+
+            // UI 状态重置
+            btn.disabled = true;
+            btn.innerText = "⏳ 正在生成中...";
+            progContainer.style.display = 'block';
+            progBar.style.width = '0%';
+            
+            // 遍历所有风格进行“生成”
+            for (let i = 0; i < styles.length; i++) {
+                const style = styles[i];
+                const box = document.getElementById(`box-${i}`);
+                
+                // 1. 设置加载状态 (Skeleton)
+                statusText.innerText = `正在生成: ${style.name}...`;
+                box.innerHTML = `<div class="skeleton"></div><div class="spinner" style="display:block"></div>`;
+                
+                // 2. 模拟网络延迟 (1.5秒一张)
+                await new Promise(r => setTimeout(r, 1500));
+                
+                // 3. 模拟“生成完成” - 使用 Unsplash 随机图代替真实生成
+                // 注意：这里使用的是随机图，真实工具会生成长得像上传者的图片
+                const randomSeed = Math.floor(Math.random() * 1000);
+                const imageUrl = `https://source.unsplash.com/512x768/?${encodeURIComponent(style.keyword)}&sig=${randomSeed}`;
+                
+                // 为了演示稳定性，我们用 Placehold.co 做备选，防止 Unsplash 挂掉
+                // 实际代码中这里会是 base64 数据
+                
+                box.innerHTML = `<img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=512&auto=format&fit=crop" class="loaded" alt="${style.name}">`;
+                
+                // *为了演示不同风格，这里仅仅是硬编码了Unsplash的逻辑演示，
+                // *实际因为CORS或Unsplash机制，图片可能不完全匹配关键词，仅作动画演示。
+                // *下面我用颜色块+文字代替真实图片，确保你能看到效果：
+                
+                box.innerHTML = `
+                    <div style="width:100%; height:100%; background:#ddd; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#555;">
+                        <span style="font-size:3rem">🖼️</span>
+                        <p style="margin:10px 0 0 0; font-size:0.8rem">Generated: ${style.name}</p>
+                    </div>
+                    <img src="https://source.unsplash.com/random/512x768?portrait,${i}" onload="this.classList.add('loaded')" 
+                         onerror="this.style.display='none'" 
+                         style="position:absolute; top:0; left:0;" />
+                `;
+
+                // 更新进度条
+                progBar.style.width = `${((i + 1) / styles.length) * 100}%`;
+            }
+
+            statusText.innerText = "🎉 所有写真生成完毕！";
+            statusText.style.color = "green";
+            btn.innerText = "✨ 再次生成";
+            btn.disabled = false;
+        }
+    </script>
+</body>
+</html>
